@@ -1,6 +1,6 @@
 class Todo {
 
-    static Tasks = []
+    static Tasks = [];
     constructor(title, description, dueDate, priority, project) {
         this.title = title;
         this.description = description;
@@ -30,8 +30,9 @@ class Todo {
         deleteBtn.textContent = 'x';
 
         deleteBtn.addEventListener('click', () => {
-            this.project.removeTask(this);
+            Project.Projects[this.project].removeTask(this);
             Todo.Tasks = Todo.Tasks.filter((todo) => todo != this);
+            console.log(Todo.Tasks);
 
         })
 
@@ -43,14 +44,45 @@ class Todo {
 
         return wrapper
     }
+
+    toJSON() {
+        return {
+            title: this.title,
+            description: this.description,
+            dueDate: this.dueDate,
+            priority: this.priority,
+            project: JSON.stringify(this.project)
+        };
+    }
+
+    static fromJSON(json) {
+   
+        let project = Project.Projects[json.project];
+        const newTask = new Todo(json.title, json.description, json.dueDate, json.priority, json.project)
+        if (project != null) {
+            project.addExistingTask(newTask);
+        }
+
+        else {
+            const projectInfo = JSON.parse(json.project);
+            project = new Project(projectInfo[1]);
+            Project.Projects[projectInfo[0]] = project;
+            document.querySelector('body').appendChild(project.createDOM());
+            project.addExistingTask(newTask);
+            
+        }
+    }
 }
 
 class Project {
-    static Projects = [];
+    static Projects = {};
+    static ID = 0;
     constructor(title) {
         this.title = title;
         this.todoList = [];
-        Project.Projects.push(this);
+        this.ID = Project.ID;
+        Project.Projects[this.ID] = this;
+        Project.ID += 1
     }
 
     removeTask(unwanted) {
@@ -120,25 +152,29 @@ class Project {
             alert('one or more fields was empty!');
             return
         }
-        const newTask = new Todo(title, description, dueDate, priority, this);
+        const newTask = new Todo(title, description, dueDate, priority, [this.ID, this.title]);
         this.todoList.push(newTask);
         this.#refreshList();
     }
 
-    addTask(task) {
+    addExistingTask(task) {
         this.todoList.push(task);
         this.#refreshList();
     }
+
+
 
     toggleList() {
         this.container.classList.toggle('hidden');
     }
 
     #delete() {
-        this.todoList = [];
         this.wrapper.remove();
-        Project.Projects = Project.Projects.filter((project) => project != this);
-        console.log(Project.Projects);
+        for (const task of this.todoList) {
+            Todo.Tasks = Todo.Tasks.filter((todo) => todo != task);
+        }
+        delete Project.Projects[this.ID];
+        this.todoList = [];
     }
 
 

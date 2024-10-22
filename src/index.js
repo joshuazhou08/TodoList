@@ -16,3 +16,26 @@ addBtn.addEventListener('click', () => {
 
 body.appendChild(addBtn);
 
+if (localStorage['history'] != null) {
+    history = JSON.parse(localStorage['history']);
+    for (const obj of history) {
+        Todo.fromJSON(obj);
+    }
+}
+
+
+
+const testBtn = document.createElement('button');
+testBtn.textContent = 'save';
+testBtn.addEventListener('click', () => {
+    history = [];
+
+    for (const task of Todo.Tasks) {
+        history.push(task);
+    }
+
+    localStorage['history'] = JSON.stringify(history);
+    }   
+)
+
+body.appendChild(testBtn);
